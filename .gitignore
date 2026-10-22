@@ -1,0 +1,29 @@
+# Node dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Build outputs
+dist/
+build/
+
+# IDE and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Uploaded files (keep structure but ignore dynamic files if desired, or keep samples)
+backend/uploads/*.jpg
+backend/uploads/*.png
+backend/uploads/*.webp
+!backend/uploads/sample_*.jpg
+
+# Logs
+*.log
