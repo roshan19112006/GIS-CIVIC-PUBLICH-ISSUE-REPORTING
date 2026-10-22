@@ -61,6 +61,16 @@ export const ReportIssuePage = () => {
       })
       .catch((err) => console.error(err));
 
+    if (new URLSearchParams(window.location.search).get('preview_success') === 'true') {
+      setSuccessData({
+        id: 1,
+        ticket_id: 'TKT-20261022-GCC1',
+        status: 'pending',
+        priority: 'high',
+        deadline: new Date(Date.now() + 48 * 3600 * 1000)
+      });
+    }
+
     // Try auto-detect location on initial load if permitted
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(

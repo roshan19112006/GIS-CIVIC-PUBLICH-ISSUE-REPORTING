@@ -138,6 +138,12 @@ export const AdminDashboard = () => {
     fetchIssuesList();
   }, [search, statusFilter, categoryFilter, wardFilter, priorityFilter, page]);
 
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('preview_assign') === 'true' && issues.length > 0) {
+      handleOpenAssign(issues[0]);
+    }
+  }, [issues]);
+
   // Open Assign Modal
   const handleOpenAssign = (issue) => {
     setActiveAssignIssue(issue);

@@ -12,7 +12,19 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const verifyToken = async () => {
+    const params = new URLSearchParams(window.location.search);
+    const demoRole = params.get('demo');
+
+    const initAuth = async () => {
+      if (demoRole) {
+        let email = 'citizen@gmail.com';
+        if (demoRole === 'admin') email = 'admin@civic.gov';
+        if (demoRole === 'officer') email = 'officer.roads@civic.gov';
+        await login(email, 'Password@123');
+        setLoading(false);
+        return;
+      }
+
       if (token) {
         try {
           const res = await issueService.getMe();
@@ -28,7 +40,7 @@ export const AuthProvider = ({ children }) => {
       setLoading(false);
     };
 
-    verifyToken();
+    initAuth();
   }, [token]);
 
   const login = async (email, password) => {
