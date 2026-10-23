@@ -8,14 +8,23 @@ const { logAudit } = require('../services/auditService');
  */
 async function register(req, res) {
   try {
-    const { name, email, password, phone, role, department_id, ward_id, badge_number } = req.body;
+    let { name, email, password, phone, role, department_id, ward_id, badge_number } = req.body;
+
+    if (!name || !email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: 'Name, email, and password are required.'
+      });
+    }
+
+    const cleanEmail = String(email).toLowerCase().trim();
 
     // Check if email already exists
-    const [existing] = await pool.query(`SELECT id FROM users WHERE email = ?`, [email.toLowerCase().trim()]);
+    const [existing] = await pool.query(`SELECT id FROM users WHERE LOWER(email) = ?`, [cleanEmail]);
     if (existing.length > 0) {
       return res.status(409).json({
         success: false,
-        message: 'An account with this email address already exists.'
+        message: 'An account with this email address already exists. Please sign in or use another email.'
       });
     }
 
@@ -23,6 +32,18 @@ async function register(req, res) {
     let assignedRole = 'citizen';
     if (req.user && req.user.role === 'admin' && role) {
       assignedRole = ['admin', 'officer', 'citizen'].includes(role) ? role : 'citizen';
+    }
+
+    // Validate ward_id if provided
+    let validWardId = null;
+    if (ward_id !== undefined && ward_id !== null && ward_id !== '') {
+      const parsedWard = parseInt(ward_id, 10);
+      if (!isNaN(parsedWard)) {
+        const [wCheck] = await pool.query(`SELECT id FROM wards WHERE id = ?`, [parsedWard]);
+        if (wCheck.length > 0) {
+          validWardId = parsedWard;
+        }
+      }
     }
 
     // Hash password
@@ -34,12 +55,12 @@ async function register(req, res) {
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, TRUE)`,
       [
         name.trim(),
-        email.toLowerCase().trim(),
+        cleanEmail,
         hashedPassword,
         assignedRole,
-        phone || null,
+        phone ? String(phone).trim().slice(0, 20) : null,
         department_id || null,
-        ward_id || null,
+        validWardId,
         badge_number || null
       ]
     );
@@ -48,7 +69,7 @@ async function register(req, res) {
 
     // Generate JWT token
     const token = jwt.sign(
-      { id: newUserId, email: email.toLowerCase().trim(), role: assignedRole },
+      { id: newUserId, email: cleanEmail, role: assignedRole },
       process.env.JWT_SECRET || 'super_secret_jwt_key_civic_gis_2026_xyz',
       { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
     );
@@ -58,7 +79,7 @@ async function register(req, res) {
       action: 'USER_REGISTERED',
       entityType: 'user',
       entityId: newUserId,
-      details: { email, role: assignedRole },
+      details: { email: cleanEmail, role: assignedRole },
       ipAddress: req.ip
     });
 
@@ -69,17 +90,20 @@ async function register(req, res) {
       user: {
         id: newUserId,
         name: name.trim(),
-        email: email.toLowerCase().trim(),
+        email: cleanEmail,
         role: assignedRole,
-        phone: phone || null,
+        phone: phone ? String(phone).trim().slice(0, 20) : null,
         department_id: department_id || null,
-        ward_id: ward_id || null,
+        ward_id: validWardId,
         badge_number: badge_number || null
       }
     });
   } catch (error) {
     console.error('[AuthController.register] Error:', error);
-    return res.status(500).json({ success: false, message: 'Internal server error while registering user.' });
+    return res.status(500).json({
+      success: false,
+      message: error.sqlMessage || 'Internal server error while registering user.'
+    });
   }
 }
 

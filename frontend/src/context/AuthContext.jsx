@@ -74,7 +74,14 @@ export const AuthProvider = ({ children }) => {
       }
       return { success: false, message: res.data?.message || 'Registration failed' };
     } catch (err) {
-      const message = err.response?.data?.message || 'Registration failed';
+      const validationMsgs = err.response?.data?.errors?.map((e) => e.message).join(' | ');
+      const message =
+        validationMsgs ||
+        err.response?.data?.message ||
+        (err.code === 'ERR_NETWORK'
+          ? 'Unable to connect to the backend server. Please verify the server is running.'
+          : err.message) ||
+        'Registration failed';
       return { success: false, message };
     }
   };

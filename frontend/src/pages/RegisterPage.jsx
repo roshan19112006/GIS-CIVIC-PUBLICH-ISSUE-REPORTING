@@ -73,9 +73,19 @@ export const RegisterPage = () => {
         </div>
 
         {error && (
-          <div className="p-3 bg-rose-50 border border-rose-200 text-rose-800 text-xs rounded-lg flex items-center gap-2">
-            <ShieldAlert className="w-4 h-4 shrink-0 text-rose-600" />
-            <span>{error}</span>
+          <div className="p-3 bg-rose-50 border border-rose-200 text-rose-800 text-xs rounded-lg flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <ShieldAlert className="w-4 h-4 shrink-0 text-rose-600" />
+              <span>{error}</span>
+            </div>
+            {error.toLowerCase().includes('already exists') && (
+              <Link
+                to="/login"
+                className="shrink-0 px-2 py-1 bg-rose-600 hover:bg-rose-700 text-white font-medium rounded text-xs transition"
+              >
+                Sign In
+              </Link>
+            )}
           </div>
         )}
 
